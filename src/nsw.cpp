@@ -13,6 +13,7 @@ const int SEED = 2024;
 
 int eN = 4;
 
+// TODO used NSW's nn api to find nearest k elements
 void NSW::AddToGraph(Graph &graph, const vf &element) {
   int nodes = graph.size();
 
@@ -92,25 +93,24 @@ vpif NSW::Search(const vf &query) {
   std::unordered_set<int> visited;
   visited.clear();
   //   repeating this to find K nearest neigbours
-  for (int x = 0; x < 5; x++) {
+  for (int x = 0; x < 10; x++) {
     vector<pif> minheap(0);
     minheap.reserve(K);
 
     // TODO Check if this needs to be a priority queue or a regular queue would
     // work. Also this currently keeps min element on top. Is this the right
     // beahviour?
-    // std::priority_queue<pif, vector<pif>, std::function<bool(pif &, pif &)>>
-    // q(
-    //     cmp);
-    std::queue<pif> q;
+    std::priority_queue<pif, vector<pif>, std::function<bool(pif &, pif &)>> q(
+        cmp2);
+    // std::queue<pif> q;
     int currNode = rand() % nodes;
     auto currSim = Dot(query, this->documents[currNode]);
 
     q.push({currNode, currSim});
 
     while (q.size()) {
-      pif node = q.front();
-      //   pif node = q.top();
+      //   pif node = q.front();
+      pif node = q.top();
       q.pop();
       int currNode = node.first;
       float currSim = node.second;
@@ -120,7 +120,7 @@ vpif NSW::Search(const vf &query) {
       if (!minheap.empty() && currSim < minheap[0].second)
         continue;
 
-      KeepTrackHighest(minheap, node, 10);
+      KeepTrackHighest(minheap, node, K);
       auto neighbors = this->graph[currNode];
 
       for (auto idx : neighbors) {

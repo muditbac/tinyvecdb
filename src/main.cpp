@@ -95,6 +95,7 @@ int main() {
 
   {
     NSW db(documents);
+    cout << "db created \n";
     auto a =
         duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     res2 = db.Search(queries);

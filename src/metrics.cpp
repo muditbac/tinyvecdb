@@ -41,5 +41,5 @@ void PrintMetrics(vvpif actual, vvpif output) {
   }
 
   float precision = total / nqueries;
-  printf("Precision: %0.2f\n", precision);
+  printf("Recall: %0.2f\n", precision);
 }
