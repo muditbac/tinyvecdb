@@ -11,7 +11,7 @@ using std::shuffle;
 
 const int SEED = 2024;
 
-int eN = 3;
+int eN = 4;
 
 void NSW::AddToGraph(Graph &graph, const vf &element) {
   int nodes = graph.size();
@@ -92,7 +92,7 @@ vpif NSW::Search(const vf &query) {
   std::unordered_set<int> visited;
   visited.clear();
   //   repeating this to find K nearest neigbours
-  for (int x = 0; x < 2; x++) {
+  for (int x = 0; x < 5; x++) {
     vector<pif> minheap(0);
     minheap.reserve(K);
 

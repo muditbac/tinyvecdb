@@ -104,13 +104,27 @@ int main() {
   }
   // auto res3 =
 
-  for (auto v : res2) {
+
+  PrintMetrics(res, res2);
+
+// sample retrieved vectors
+cout << "From BFNN -> " << endl;
+  for (auto v : res) {
     for (auto x : v) {
-      cout << x.second << " ";
+      printf("%.2f(%d) ", x.second, x.first);
     }
     cout << endl;
     break;
   }
 
-  PrintMetrics(res, res2);
+cout << "From NSW -> " << endl;
+  for (auto v : res2) {
+    for (auto x : v) {
+      printf("%.2f(%d) ", x.second, x.first);
+      // cout << x.second << " " ;
+    }
+    cout << endl;
+    break;
+  }
+
 }
