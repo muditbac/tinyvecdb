@@ -9,7 +9,7 @@ class NSW {
 public:
   NSW(const vvf &documents);
   vvpif Search(const vvf &queries);
-  vpif Search(const vf &query);
+  vpif Search(const vf &query, int K);
 
   Graph graph; // adjency list
 

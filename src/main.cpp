@@ -2,6 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include <numeric>
+#include <cmath>
 
 #include "ds.h"
 #include "metrics.h"
@@ -10,8 +11,8 @@
 using namespace std;
 using namespace std::chrono;
 
-int NQUERIES = 100;
-int NDOCUMENTS = 10000;
+int NQUERIES = 1000;
+int NDOCUMENTS = 100000;
 int NDIM = 128;
 
 float Norm(const vf &vec) {
@@ -96,20 +97,24 @@ int main() {
   {
     NSW db(documents);
     cout << "db created \n";
-    auto a =
-        duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    res2 = db.Search(queries);
-    auto b =
-        duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    cout << "time taken for NSW: " << (b - a).count() << endl;
+    float total = 0;
+    for (int j = 0; j < 10; j++) {
+      auto a =
+          duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+      res2 = db.Search(queries);
+      auto b =
+          duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+      cout << "time taken for NSW: " << (b - a).count() << endl;
+      total += (b - a).count();
+    }
+    printf("average %0.2f\n", total / 10);
   }
   // auto res3 =
 
-
   PrintMetrics(res, res2);
 
-// sample retrieved vectors
-cout << "From BFNN -> " << endl;
+  // sample retrieved vectors
+  cout << "From BFNN -> " << endl;
   for (auto v : res) {
     for (auto x : v) {
       printf("%.2f(%d) ", x.second, x.first);
@@ -118,7 +123,7 @@ cout << "From BFNN -> " << endl;
     break;
   }
 
-cout << "From NSW -> " << endl;
+  cout << "From NSW -> " << endl;
   for (auto v : res2) {
     for (auto x : v) {
       printf("%.2f(%d) ", x.second, x.first);
@@ -127,5 +132,4 @@ cout << "From NSW -> " << endl;
     cout << endl;
     break;
   }
-
 }

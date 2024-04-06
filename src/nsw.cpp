@@ -1,5 +1,6 @@
 #include "nsw.h"
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 #include <queue>
 #include <random>
@@ -11,35 +12,28 @@ using std::shuffle;
 
 const int SEED = 2024;
 
-int eN = 4;
+int M = 32;
 
 // TODO used NSW's nn api to find nearest k elements
 void NSW::AddToGraph(Graph &graph, const vf &element) {
   int nodes = graph.size();
+  vector<int> currentNode(0);
 
-  // finding dot products with all existing nodes
-  vf dotprods(nodes, 0);
-  for (int i = 0; i < nodes; i++) {
-    dotprods[i] = Dot(element, this->documents[i]);
+  if (nodes % 1000 == 0) {
+    std::cout << "\r" << nodes;
+    std::flush(std::cout);
+  }
+  if (nodes == 0) {
+    graph.push_back(currentNode);
+    return;
   }
 
-  // finding nearest eN nodes
-  vector<int> range(nodes, 0);
-  iota(range.begin(), range.end(), 0);
-  int e = std::min(eN, nodes);
-  std::partial_sort(
-      range.begin(), range.begin() + e, range.end(),
-      [&dotprods](int i, int j) { return dotprods[i] > dotprods[j]; });
-
-  // creating edges to nearest elements
-  vector<int> currentNode(0);
-  for (int i = 0; i < e; i++) {
-    int index = range[i];
+  auto res = Search(element, M);
+  for (auto r : res) {
+    int index = r.first;
     graph[index].push_back(nodes); // adding current element
     currentNode.push_back(index);
   }
-
-  // adding current elements
   graph.push_back(currentNode);
 }
 
@@ -67,9 +61,7 @@ public:
 bool cmp(pif &a, pif &b) { return a.second > b.second; }
 bool cmp2(pif &a, pif &b) { return a.second < b.second; }
 
-int K = 10;
-
-void KeepTrackHighest(vector<pif> &minheap, pif element, int size = K) {
+void KeepTrackHighest(vector<pif> &minheap, pif &element, int size) {
   if (minheap.size() < size) {
     minheap.push_back(element);
     std::push_heap(minheap.begin(), minheap.end(), cmp);
@@ -83,19 +75,22 @@ void KeepTrackHighest(vector<pif> &minheap, pif element, int size = K) {
   }
 }
 
-vpif NSW::Search(const vf &query) {
+vpif NSW::Search(const vf &query, int K = 10) {
   // min heap
   //   std::priority_queue<pif, vector<pif>, Compare> minheap;
   vector<pif> ans(0);
   ans.reserve(K);
   int nodes = this->graph.size();
 
+  int ef = 2 * K;
+  ef = 200;
+
   std::unordered_set<int> visited;
   visited.clear();
   //   repeating this to find K nearest neigbours
-  for (int x = 0; x < 10; x++) {
+  for (int x = 0; x < 1; x++) {
     vector<pif> minheap(0);
-    minheap.reserve(K);
+    minheap.reserve(ef);
 
     // TODO Check if this needs to be a priority queue or a regular queue would
     // work. Also this currently keeps min element on top. Is this the right
@@ -117,17 +112,19 @@ vpif NSW::Search(const vf &query) {
       if (visited.count(currNode) > 0) // already visited node
         continue;
       visited.insert(node.first);
-      if (!minheap.empty() && currSim < minheap[0].second)
+      if (minheap.size() == ef && currSim < minheap[0].second)
         continue;
 
-      KeepTrackHighest(minheap, node, K);
+      KeepTrackHighest(minheap, node, ef);
       auto neighbors = this->graph[currNode];
 
       for (auto idx : neighbors) {
         auto neighborSim = Dot(query, this->documents[idx]);
 
         // pre filtering, saves time
-        if (!minheap.empty() && neighborSim < minheap[0].second)
+        if (visited.count(idx) > 0) // already visited node
+          continue;
+        if (minheap.size() == ef && neighborSim < minheap[0].second)
           continue;
 
         q.push({idx, neighborSim});
@@ -136,7 +133,7 @@ vpif NSW::Search(const vf &query) {
 
     // global optimum across all random searches
     for (auto each : minheap) {
-      KeepTrackHighest(ans, each);
+      KeepTrackHighest(ans, each, K);
     }
   }
 
