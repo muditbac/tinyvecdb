@@ -4,6 +4,7 @@
 #include <numeric>
 #include <queue>
 #include <random>
+#include <set>
 #include <unordered_set>
 
 #include "metrics.h"
@@ -13,6 +14,7 @@ using std::shuffle;
 const int SEED = 2024;
 
 int M = 32;
+int ef_construction = 32;
 
 // TODO used NSW's nn api to find nearest k elements
 void NSW::AddToGraph(Graph &graph, const vf &element) {
@@ -28,7 +30,7 @@ void NSW::AddToGraph(Graph &graph, const vf &element) {
     return;
   }
 
-  auto res = Search(element, M);
+  auto res = Search(element, M, ef_construction);
   for (auto r : res) {
     int index = r.first;
     graph[index].push_back(nodes); // adding current element
@@ -48,15 +50,11 @@ void NSW::BuildGraph(const vvf &documents) {
 NSW::NSW(const vvf &documents) {
   this->documents.clear();
   this->documents = documents;
+  // Enable shuffle if input is not random
   //   shuffle(this->documents.begin(), this->documents.end(),
   //           std::default_random_engine(SEED));
   BuildGraph(this->documents);
 }
-
-class Compare {
-public:
-  bool operator()(pif &a, pif &b) { return a.second > b.second; }
-};
 
 bool cmp(pif &a, pif &b) { return a.second > b.second; }
 bool cmp2(pif &a, pif &b) { return a.second < b.second; }
@@ -75,20 +73,16 @@ void KeepTrackHighest(vector<pif> &minheap, pif &element, int size) {
   }
 }
 
-vpif NSW::Search(const vf &query, int K = 10) {
-  // min heap
-  //   std::priority_queue<pif, vector<pif>, Compare> minheap;
+vpif NSW::Search(const vf &query, int K = 10, int ef=10) {
+
   vector<pif> ans(0);
   ans.reserve(K);
   int nodes = this->graph.size();
 
-  int ef = 2 * K;
-  ef = 200;
-
   std::unordered_set<int> visited;
   visited.clear();
   //   repeating this to find K nearest neigbours
-  for (int x = 0; x < 1; x++) {
+  for (int x = 0; x < 2; x++) {
     vector<pif> minheap(0);
     minheap.reserve(ef);
 
@@ -109,23 +103,22 @@ vpif NSW::Search(const vf &query, int K = 10) {
       q.pop();
       int currNode = node.first;
       float currSim = node.second;
-      if (visited.count(currNode) > 0) // already visited node
+
+      if (minheap.size() > 0 && currSim < minheap[0].second)
+        break;
+      if (visited.find(currNode) != visited.end()) // already visited node
         continue;
       visited.insert(node.first);
-      if (minheap.size() == ef && currSim < minheap[0].second)
-        continue;
 
       KeepTrackHighest(minheap, node, ef);
-      auto neighbors = this->graph[currNode];
+      auto& neighbors = this->graph[currNode];
 
       for (auto idx : neighbors) {
         auto neighborSim = Dot(query, this->documents[idx]);
 
         // pre filtering, saves time
-        if (visited.count(idx) > 0) // already visited node
-          continue;
-        if (minheap.size() == ef && neighborSim < minheap[0].second)
-          continue;
+        // if (visited.count(idx) > 0) // already visited node
+        //   continue;
 
         q.push({idx, neighborSim});
       }
@@ -136,6 +129,7 @@ vpif NSW::Search(const vf &query, int K = 10) {
       KeepTrackHighest(ans, each, K);
     }
   }
+//   std::cout << "nhops " << visited.size() << "\n";
 
   return ans;
 }
