@@ -95,7 +95,8 @@ int main() {
   }
 
   {
-    NSW db(documents);
+    NSW db;
+    db.BuildIndex(documents);
     cout << "db created \n";
     float total = 0;
     for (int j = 0; j < 10; j++) {
@@ -127,8 +128,6 @@ int main() {
   for (auto v : res2) {
     for (auto x : v) {
       printf("%.2f(%d) ", x.second, x.first);
-      // cout << x.second << " " ;
-      COUT_DEBUG << "test";
     }
     cout << endl;
     break;

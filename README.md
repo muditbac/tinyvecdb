@@ -13,6 +13,5 @@ Precision: 0.15
 ```
 
 # TODO
-- remove hard coded parameters and move them as class variables
 - move BFNN to respective file
 - HNSW implementation

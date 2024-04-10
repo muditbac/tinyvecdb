@@ -13,8 +13,8 @@ using std::shuffle;
 
 const int SEED = 2024;
 
-int M = 32; // number of nearest neighbours to connect to
-int ef_construction = 32;
+// int M = 32; // number of nearest neighbours to connect to
+// int ef_construction = 32;
 
 // TODO used NSW's nn api to find nearest k elements
 void NSW::AddToGraph(Graph &graph, const vf &element) {
@@ -22,7 +22,7 @@ void NSW::AddToGraph(Graph &graph, const vf &element) {
   vector<int> currentNode(0);
 
   if (nodes % 1000 == 0) {
-    COUT_DEBUG << "\r" << nodes;
+    COUT_DEBUG << "\r" << "Indexing: " << nodes << " nodes";
     std::flush(COUT_DEBUG);
   }
 
@@ -31,7 +31,7 @@ void NSW::AddToGraph(Graph &graph, const vf &element) {
     return;
   }
 
-  auto res = Search(element, M, ef_construction, NULL);
+  auto res = Search(element, this->M, this->efConstruction, NULL);
   for (auto r : res) {
     int index = r.first;
     graph[index].push_back(nodes); // adding current element
@@ -40,7 +40,12 @@ void NSW::AddToGraph(Graph &graph, const vf &element) {
   graph.push_back(currentNode);
 }
 
-void NSW::BuildGraph(const vvf &documents) {
+void NSW::BuildIndex(const vvf &documents) {
+  this->documents.clear();
+  this->documents = documents;
+  // Enable shuffle if input is not random
+  //   shuffle(this->documents.begin(), this->documents.end(),
+  //           std::default_random_engine(SEED));
   int ndocs = documents.size();
 
   for (auto &doc : documents) {
@@ -48,18 +53,13 @@ void NSW::BuildGraph(const vvf &documents) {
   }
 }
 
-NSW::NSW(const vvf &documents) {
-  this->documents.clear();
-  this->documents = documents;
-  // Enable shuffle if input is not random
-  //   shuffle(this->documents.begin(), this->documents.end(),
-  //           std::default_random_engine(SEED));
-  BuildGraph(this->documents);
+NSW::NSW() {
+
 }
 
-bool cmp(pif &a, pif &b) { return a.second > b.second; }
+bool cmp_second_desc(pif &a, pif &b) { return a.second > b.second; }
 
-class Comp2 {
+class CompareSecond {
 public:
   bool operator()(pif &a, pif &b) { return a.second < b.second; }
 };
@@ -67,14 +67,14 @@ public:
 void KeepTrackHighest(vector<pif> &minheap, pif &element, int size) {
   if (minheap.size() < size) {
     minheap.push_back(element);
-    std::push_heap(minheap.begin(), minheap.end(), cmp);
+    std::push_heap(minheap.begin(), minheap.end(), cmp_second_desc);
     return;
   }
   if (element.second >= minheap[0].second) {
-    std::pop_heap(minheap.begin(), minheap.end(), cmp);
+    std::pop_heap(minheap.begin(), minheap.end(), cmp_second_desc);
     minheap.pop_back();
     minheap.push_back(element);
-    std::push_heap(minheap.begin(), minheap.end(), cmp);
+    std::push_heap(minheap.begin(), minheap.end(), cmp_second_desc);
   }
 }
 
@@ -91,14 +91,14 @@ vpif NSW::Search(const vf &query, int K = 10, int ef = 20, int *dots = NULL) {
     *dots = 1;
 
   //   repeating this to find K nearest neigbours
-  for (int x = 0; x < 2; x++) {
+  for (int x = 0; x < this->L; x++) {
     vector<pif> minheap(0);
     minheap.reserve(ef);
 
     // TODO Check if this needs to be a priority queue or a regular queue would
     // work. Also this currently keeps min element on top. Is this the right
     // beahviour?
-    std::priority_queue<pif, vector<pif>, Comp2> q;
+    std::priority_queue<pif, vector<pif>, CompareSecond> q;
 
     int currNode = rand() % nodes;
     auto currSim = Dot(query, this->documents[currNode]);
@@ -153,9 +153,10 @@ vvpif NSW::Search(const vvf &queries) {
   int total = 0;
   for (auto &query : queries) {
     int dot = 0;
-    results.push_back(this->Search(query, 10, 40, &dot));
+    results.push_back(this->Search(query, this->K, this->efInference, &dot));
     total += dot;
   }
-  COUT_DEBUG << "average dots: " << total * 1. / queries.size() << std::endl;
+  COUT_DEBUG << "average number of dot products: "
+             << total * 1. / queries.size() << std::endl;
   return results;
 }
