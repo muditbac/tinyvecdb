@@ -13,7 +13,7 @@ using std::shuffle;
 
 const int SEED = 2024;
 
-int M = 32;
+int M = 32; // number of nearest neighbours to connect to
 int ef_construction = 32;
 
 // TODO used NSW's nn api to find nearest k elements
@@ -30,7 +30,7 @@ void NSW::AddToGraph(Graph &graph, const vf &element) {
     return;
   }
 
-  auto res = Search(element, M, ef_construction);
+  auto res = Search(element, M, ef_construction, NULL);
   for (auto r : res) {
     int index = r.first;
     graph[index].push_back(nodes); // adding current element
@@ -59,6 +59,11 @@ NSW::NSW(const vvf &documents) {
 bool cmp(pif &a, pif &b) { return a.second > b.second; }
 bool cmp2(pif &a, pif &b) { return a.second < b.second; }
 
+class Comp2 {
+public:
+  bool operator()(pif &a, pif &b) { return a.second < b.second; }
+};
+
 void KeepTrackHighest(vector<pif> &minheap, pif &element, int size) {
   if (minheap.size() < size) {
     minheap.push_back(element);
@@ -73,14 +78,18 @@ void KeepTrackHighest(vector<pif> &minheap, pif &element, int size) {
   }
 }
 
-vpif NSW::Search(const vf &query, int K = 10, int ef=10) {
+vpif NSW::Search(const vf &query, int K = 10, int ef = 20, int *dots = NULL) {
 
   vector<pif> ans(0);
   ans.reserve(K);
   int nodes = this->graph.size();
 
-  std::unordered_set<int> visited;
+  std::set<int> visited;
   visited.clear();
+
+  if (dots != NULL)
+    *dots = 1;
+
   //   repeating this to find K nearest neigbours
   for (int x = 0; x < 2; x++) {
     vector<pif> minheap(0);
@@ -89,8 +98,7 @@ vpif NSW::Search(const vf &query, int K = 10, int ef=10) {
     // TODO Check if this needs to be a priority queue or a regular queue would
     // work. Also this currently keeps min element on top. Is this the right
     // beahviour?
-    std::priority_queue<pif, vector<pif>, std::function<bool(pif &, pif &)>> q(
-        cmp2);
+    std::priority_queue<pif, vector<pif>, Comp2> q;
     // std::queue<pif> q;
     int currNode = rand() % nodes;
     auto currSim = Dot(query, this->documents[currNode]);
@@ -111,10 +119,12 @@ vpif NSW::Search(const vf &query, int K = 10, int ef=10) {
       visited.insert(node.first);
 
       KeepTrackHighest(minheap, node, ef);
-      auto& neighbors = this->graph[currNode];
+      auto &neighbors = this->graph[currNode];
 
       for (auto idx : neighbors) {
         auto neighborSim = Dot(query, this->documents[idx]);
+        if (dots != NULL)
+          (*dots)++;
 
         // pre filtering, saves time
         // if (visited.count(idx) > 0) // already visited node
@@ -129,15 +139,22 @@ vpif NSW::Search(const vf &query, int K = 10, int ef=10) {
       KeepTrackHighest(ans, each, K);
     }
   }
-//   std::cout << "nhops " << visited.size() << "\n";
+  // std::cout << "nhops " << visited.size() << "\n";
+  // if (dots != NULL)
+  //   std::cout << "dots " << *dots << "\n";
 
   return ans;
 }
 
 vvpif NSW::Search(const vvf &queries) {
   vvpif results(0);
+  results.reserve(queries.size());
+  int total = 0;
   for (auto &query : queries) {
-    results.push_back(this->Search(query));
+    int dot = 0;
+    results.push_back(this->Search(query, 10, 40, &dot));
+    total += dot;
   }
+  std::cout << "average dots: " << total * 1. / queries.size() << std::endl;
   return results;
 }
