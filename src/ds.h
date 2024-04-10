@@ -1,18 +1,24 @@
 #ifndef DS_H
 #define DS_H
 
-#include <vector>
 #include <utility>
+#include <vector>
 
-using std::vector;
+std::ostream &get_null_stream();
+
+#ifdef DEBUG
+#define COUT_DEBUG std::cout
+#else
+#define COUT_DEBUG get_null_stream()
+#endif
+
 using std::pair;
+using std::vector;
 
 #define vvf vector<vector<float>>
-// #define vf vector<float>
+#define vf vector<float>
 #define vvpif vector<vector<pair<int, float>>>
 #define vpif vector<pair<int, float>>
 #define pif pair<int, float>
-
-typedef vector<float> vf;
 
 #endif

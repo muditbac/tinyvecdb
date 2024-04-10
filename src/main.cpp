@@ -12,7 +12,7 @@ using namespace std;
 using namespace std::chrono;
 
 int NQUERIES = 1000;
-int NDOCUMENTS = 100000;
+int NDOCUMENTS = 10000;
 int NDIM = 128;
 
 float Norm(const vf &vec) {
@@ -128,6 +128,7 @@ int main() {
     for (auto x : v) {
       printf("%.2f(%d) ", x.second, x.first);
       // cout << x.second << " " ;
+      COUT_DEBUG << "test";
     }
     cout << endl;
     break;

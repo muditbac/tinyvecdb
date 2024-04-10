@@ -22,9 +22,10 @@ void NSW::AddToGraph(Graph &graph, const vf &element) {
   vector<int> currentNode(0);
 
   if (nodes % 1000 == 0) {
-    std::cout << "\r" << nodes;
-    std::flush(std::cout);
+    COUT_DEBUG << "\r" << nodes;
+    std::flush(COUT_DEBUG);
   }
+
   if (nodes == 0) {
     graph.push_back(currentNode);
     return;
@@ -57,7 +58,6 @@ NSW::NSW(const vvf &documents) {
 }
 
 bool cmp(pif &a, pif &b) { return a.second > b.second; }
-bool cmp2(pif &a, pif &b) { return a.second < b.second; }
 
 class Comp2 {
 public:
@@ -99,14 +99,14 @@ vpif NSW::Search(const vf &query, int K = 10, int ef = 20, int *dots = NULL) {
     // work. Also this currently keeps min element on top. Is this the right
     // beahviour?
     std::priority_queue<pif, vector<pif>, Comp2> q;
-    // std::queue<pif> q;
+
     int currNode = rand() % nodes;
     auto currSim = Dot(query, this->documents[currNode]);
 
     q.push({currNode, currSim});
 
     while (q.size()) {
-      //   pif node = q.front();
+
       pif node = q.top();
       q.pop();
       int currNode = node.first;
@@ -139,9 +139,10 @@ vpif NSW::Search(const vf &query, int K = 10, int ef = 20, int *dots = NULL) {
       KeepTrackHighest(ans, each, K);
     }
   }
-  // std::cout << "nhops " << visited.size() << "\n";
+
+  // COUT_DEBUG << "nhops " << visited.size() << "\n";
   // if (dots != NULL)
-  //   std::cout << "dots " << *dots << "\n";
+  //   COUT_DEBUG << "dots " << *dots << "\n";
 
   return ans;
 }
@@ -155,6 +156,6 @@ vvpif NSW::Search(const vvf &queries) {
     results.push_back(this->Search(query, 10, 40, &dot));
     total += dot;
   }
-  std::cout << "average dots: " << total * 1. / queries.size() << std::endl;
+  COUT_DEBUG << "average dots: " << total * 1. / queries.size() << std::endl;
   return results;
 }
