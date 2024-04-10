@@ -1,7 +1,7 @@
 #ifndef NSW_H
 #define NSW_H
 
-#include "ds.h"
+#include "commons.h"
 
 typedef vector<vector<int>> Graph;
 

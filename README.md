@@ -13,5 +13,4 @@ Precision: 0.15
 ```
 
 # TODO
-- move BFNN to respective file
 - HNSW implementation

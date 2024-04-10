@@ -9,5 +9,5 @@ fi
 
 
 g++ -std=c++11 -O3 $DEBUG_FLAG \
-    src/main.cpp src/metrics.cpp src/nsw.cpp src/ds.cpp
+    src/main.cpp src/metrics.cpp src/nsw.cpp src/bfnn.cpp src/commons.cpp
 ./a.out && rm a.out

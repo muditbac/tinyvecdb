@@ -1,7 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "ds.h"
+#include "commons.h"
 
 void PrintResultSample(vvpif);
 
