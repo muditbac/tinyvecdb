@@ -7,6 +7,7 @@ using std::unordered_set;
 
 float Dot(const vf &a, const vf &b) {
   float s = 0;
+  #pragma omp simd reduction(+:s)
   for (int i = 0; i < a.size(); i++) {
     s += a[i] * b[i];
   }
